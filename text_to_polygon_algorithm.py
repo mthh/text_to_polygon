@@ -34,6 +34,7 @@ from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
                        QgsProcessingAlgorithm,
+                       QgsProcessingParameterEnum,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterFeatureSink,
                        QgsProcessingParameterNumber,
@@ -46,10 +47,11 @@ from qgis.core import (QgsProcessing,
                        QgsVectorLayer,
                        QgsProject,
                        QgsPointXY)
-from qgis.PyQt.QtGui import QFont
-from qgis.PyQt.QtGui import QPainterPath
-
-
+from qgis.PyQt.QtGui import (
+    QFont,
+    QFontDatabase,
+    QPainterPath,
+)
 
 class TextToPolygonAlgorithm(QgsProcessingAlgorithm):
     """
@@ -65,24 +67,42 @@ class TextToPolygonAlgorithm(QgsProcessingAlgorithm):
     class.
     """
 
+    font_families = QFontDatabase().families()
+
     # Constants used to refer to parameters and outputs. They will be
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
-
-    OUTPUT = 'OUTPUT'
     INPUT_TEXT = 'INPUT_TEXT'
+    FONT = 'FONT'
     TEXT_SIZE = 'TEXT_SIZE'
+    OUTPUT = 'OUTPUT'
+
+    def __init__(self, iface):
+        QgsProcessingAlgorithm.__init__(self)
+        self.iface = iface
 
     def initAlgorithm(self, config):
         """
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+
+
         self.addParameter(
             QgsProcessingParameterString(
                 self.INPUT_TEXT,
                 self.tr('Text to convert to polygons'),
                 'Some text'
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterEnum(
+                self.FONT,
+                self.tr('Font'),
+                self.font_families,
+                False,
+                0,
             )
         )
 
@@ -115,11 +135,14 @@ class TextToPolygonAlgorithm(QgsProcessingAlgorithm):
             QgsProject.instance().crs(),
         )
 
+        current_extent = self.iface.mapCanvas().mapSettings().extent()
+        center = tuple(current_extent.center())
+
         features = self.text_to_layer(
             parameters[self.INPUT_TEXT],
-            'Arial',
+            self.font_families[parameters[self.FONT]],
             parameters[self.TEXT_SIZE],
-
+            center
         )
 
         total = 100.0 / len(features)
@@ -172,7 +195,7 @@ class TextToPolygonAlgorithm(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return TextToPolygonAlgorithm()
+        return TextToPolygonAlgorithm(self.iface)
 
     @staticmethod
     def text_to_layer(
@@ -180,11 +203,8 @@ class TextToPolygonAlgorithm(QgsProcessingAlgorithm):
         font_family="Arial",
         font_size=100,
         origin=(0, 0),
-        # crs="EPSG:4326",
         precision=100,
     ):
-        # layer = QgsVectorLayer(f"Polygon?crs={crs}", "Text Geometry", "memory")
-        # provider = layer.dataProvider()
         font = QFont(font_family, font_size * precision)
         path = QPainterPath()
         path.addText(0, 0, font, text)

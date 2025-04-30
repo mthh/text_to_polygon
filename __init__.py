@@ -36,4 +36,4 @@ def classFactory(iface):  # pylint: disable=invalid-name
     """
     #
     from .text_to_polygon import TextToPolygonPlugin
-    return TextToPolygonPlugin()
+    return TextToPolygonPlugin(iface)

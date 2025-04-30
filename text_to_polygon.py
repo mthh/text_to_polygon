@@ -45,12 +45,13 @@ if cmd_folder not in sys.path:
 
 class TextToPolygonPlugin(object):
 
-    def __init__(self):
+    def __init__(self, iface):
         self.provider = None
+        self.iface = iface
 
     def initProcessing(self):
         """Init Processing provider for QGIS >= 3.8."""
-        self.provider = TextToPolygonProvider()
+        self.provider = TextToPolygonProvider(self.iface)
         QgsApplication.processingRegistry().addProvider(self.provider)
 
     def initGui(self):

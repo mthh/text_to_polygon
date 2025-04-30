@@ -36,11 +36,12 @@ from .text_to_polygon_algorithm import TextToPolygonAlgorithm
 
 class TextToPolygonProvider(QgsProcessingProvider):
 
-    def __init__(self):
+    def __init__(self, iface):
         """
         Default constructor.
         """
         QgsProcessingProvider.__init__(self)
+        self.iface = iface
 
     def unload(self):
         """
@@ -53,7 +54,7 @@ class TextToPolygonProvider(QgsProcessingProvider):
         """
         Loads all algorithms belonging to this provider.
         """
-        self.addAlgorithm(TextToPolygonAlgorithm())
+        self.addAlgorithm(TextToPolygonAlgorithm(self.iface))
         # add additional algorithms here
         # self.addAlgorithm(MyOtherAlgorithm())
 
